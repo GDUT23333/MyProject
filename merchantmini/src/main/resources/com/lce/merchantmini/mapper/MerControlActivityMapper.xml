@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.MerControlActivityMapper">
+
+    <resultMap id="detailChange" type="com.lce.merchantmini.domain.vo.ActivityDataShow">
+        <result column="activity_name" property="activityName"/>
+        <result column="registered_number" property="registryNumber"/>
+        <result column="status" property="status"/>
+        <result column="start_time" property="startTime"/>
+        <result column="poster_image" property="backGround"/>
+        <result column="click_rate" property="todayClickRate"/>
+        <result column="activityId" property="activityId"/>
+        <result column="totalPrice" property="totalPrice"/>
+        <result column="is_accept" property="isAccept"/>
+        <collection property="tickets" javaType="java.util.ArrayList" ofType="com.lce.merchantmini.domain.vo.SimpleTicketInfo" column="activityId" select="selectTicket"/>
+    </resultMap>
+
+    <!--回显指定商家活动管理页面-->
+    <select id="getActivityDetail" parameterType="Integer" resultMap="detailChange">
+        SELECT ac.activity_name,ac.registered_number,ac.`status`,ac.poster_image,
+        ac.id as activityId,ac.click_rate,ac.start_time,COUNT(*) as commentCount,ac.is_accept,
+        (SELECT SUM(o.`total_price`) FROM mandatory_information mi
+        LEFT JOIN `order` o  ON mi.`m_id` = o.`m_id`
+        WHERE mi.y_id = #{avtivityId} AND o.`order_status` = 1)  AS totalPrice
+        FROM activity ac , comment co
+        WHERE ac.`id` = #{activityId} AND co.`activity_id`=ac.`id`;
+    </select>
+
+    <!--指定商家活动的票详情-->
+    <select id="selectTicket" parameterType="Integer" resultType="com.lce.merchantmini.domain.vo.SimpleTicketInfo">
+        SELECT tk.t_id as tId,tk.t_instructions as ticketInstruction,tk.`t_name` as ticketName,
+        tk.`t_number` as ticketNumber,tk.`t_price` as ticketPrice,tk.`t_remain_number`
+        as ticketRemainNumber
+        FROM ticket tk WHERE tk.`y_id` = #{activityId};
+    </select>
+
+    <!--指定商家活动未回复的问题总数-->
+    <select id="countTotalConsultById" parameterType="Integer" resultType="Integer">
+        SELECT COUNT(*) FROM consult WHERE activity_id = #{activityId} AND !ISNULL(reply);
+    </select>
+
+    <!--得到全部报名者-->
+    <resultMap id="membersChange" type="com.lce.merchantmini.domain.vo.RegisteredMember">
+        <result column="m_id" property="mId"/>
+        <result column="name" property="name"/>
+        <result column="school" property="school"/>
+        <result column="phone" property="phone"/>
+        <result column="t_name" property="ticketName"/>
+    </resultMap>
+
+    <select id="getRegisteredMembers" parameterType="Integer" resultMap="membersChange">
+        SELECT mi.m_id,mi.`name`,mi.gender,mi.phone,mi.school,mi.`status`,ti.`t_name`
+        FROM mandatory_information mi,ticket ti
+        WHERE mi.`y_id` = #{activityId} AND mi.`t_id` = ti.`t_id` AND mi.`status` = 1 ORDER BY mi.create_time DESC;
+    </select>
+
+    <!--模糊搜索报名者-->
+    <select id="searchRegisteredMembers" parameterType="map" resultMap="membersChange">
+        SELECT * FROM
+        (SELECT mi.m_id,mi.`name`,mi.gender,mi.phone,mi.school,mi.`status`,ti.`t_name`
+        FROM mandatory_information mi,ticket ti
+        WHERE mi.`y_id` = #{activityId} AND mi.`t_id` = ti.`t_id`  AND mi.`status` = 1  ORDER BY mi.create_time DESC)
+        AS temp WHERE phone LIKE concat('%',#{content},'%')
+        OR `name` LIKE concat('%',#{content},'%');
+    </select>
+
+    <!--报名者信息回填-->
+    <resultMap id="webFormChange" type="com.lce.merchantmini.domain.vo.FormTable">
+        <result column="c_id" property="cId"/>
+        <result column="is_optional" property="isOptional"/>
+        <result column="property_type" property="propertyType"/>
+        <result column="cv_id" property="cvId"/>
+        <result column="value" property="tableValue"/>
+        <result column="property" property="property"/>
+    </resultMap>
+
+    <select id="getMembersDetails" parameterType="map" resultMap="webFormChange">
+         SELECT ci.c_id,ci.is_optional,ci.property,ci.property_type,cv.`cv_id`,cv.`value`
+         FROM custom_information ci,custom_value cv
+         WHERE ci.`c_id` = cv.`c_id`
+         AND cv.`m_id` = #{mId} AND ci.`y_id` = #{activityId};
+    </select>
+    <select id="getMemberDetailsAddition" parameterType="String" resultType="com.lce.merchantmini.domain.dto.RegisteredMemberDetail">
+         SELECT  mi.`phone`,mi.`name`,mi.`gender`,mi.`school`,mi.`status`,mi.`m_id` FROM mandatory_information mi WHERE mi.`m_id` = #{mId};
+    </select>
+
+    <!--回显修改活动页面-->
+    <resultMap id="activityChange" type="com.lce.merchantmini.domain.dto.ActivityInfo">
+        <result column="status" property="status"/>
+        <result column="activityId" property="aId"/>
+        <result column="activity_name" property="activityName"/>
+        <result column="start_time" property="startTime"/>
+        <result column="registration_deadline" property="registerDeadLine"/>
+        <result column="end_time" property="endTime"/>
+        <result column="address" property="address"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="poster_image" property="posterImg"/>
+        <result column="linkman_code" property="linkManCode"/>
+        <result column="groupCode" property="group_code"/>
+        <result column="announcement" property="announcement"/>
+        <result column="activity_details" property="activityDetail"/>
+
+        <collection property="tickets" ofType="com.lce.merchantmini.domain.vo.CompleteTicketInfo" javaType="java.util.ArrayList" column="activityId" select="selectCompleteTicket"/>
+    </resultMap>
+    <select parameterType="Integer" id="getActInfo" resultMap="activityChange">
+        SELECT id as activityId,activity_name,registration_deadline,
+        start_time,end_time,address,poster_image,activity_details,
+        status,video_url,announcement,linkman_code,group_code
+        FROM activity WHERE id = #{activityId};
+    </select>
+    <select id="selectCompleteTicket" parameterType="Integer" resultType="com.lce.merchantmini.domain.vo.CompleteTicketInfo">
+        SELECT tk.t_id as tId,tk.t_instructions as ticketInstruction,tk.`t_name` as ticketName,
+        tk.`t_number` as ticketNumber,tk.`t_price` as ticketPrice,tk.`t_remain_number`
+        as ticketRemainNumber,t_refund_type as refundType,t_refund_reason as refundReason
+        FROM ticket tk WHERE tk.`y_id` = #{activityId};
+    </select>
+    <!--修改活动-->
+    <update id="updateActivity" parameterType="com.lce.merchantmini.domain.dto.ActivityInfo">
+        update activity
+        <set>
+            <if test="linkManCode != null and linkManCode != ''">
+                linkman_code = #{linkManCode},
+            </if>
+            <if test="groupCode != null and groupCode != ''">
+                group_code = #{groupCode},
+            </if>
+            <if test="announcement != null and announcement != ''">
+                announcement = #{announcement}
+            </if>
+        </set>
+        <where>
+            id = #{aId};
+        </where>
+    </update>
+    <!--批量修改ticket-->
+    <update id="updateTickets" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index">
+            update ticket
+            <set>
+                <if test="ticketNumber >= 0">
+                    t_number = #{item.ticketNumber},
+                </if>
+                <if test="ticketInstruction != null and ticketInstruction != ''">
+                    t_instructions = #{item.ticketInstruction},
+                </if>
+                <if test="ticketRemainNumber >= 0">
+                    t_remain_number = #{item.ticketRemainNumber}
+                </if>
+            </set>
+            <where>
+                t_id = #{item.tId}
+            </where>
+        </foreach>
+    </update>
+
+    <select id="showActivity" resultType="com.lce.merchantmini.domain.vo.ActivitySimpleInfo" parameterType="Integer">
+        SELECT id as activityId,activity_name as activityName,
+        registration_deadline as registrationDeadLine,start_time as startTime,
+        address,poster_image as posterImage,`status`
+        FROM activity
+        WHERE u_id = #{mId} ;
+
+    </select>
+    <select id="showActivityByStatus" resultType="com.lce.merchantmini.domain.vo.ActivitySimpleInfo" parameterType="Map">
+        SELECT id as activityId,activity_name as activityName,
+        registration_deadline as registrationDeadLine,start_time as startTime,
+        address,poster_image as posterImage,`status`
+        FROM activity
+        <where>
+            u_id = #{mId} and `status` = #{status};
+        </where>
+    </select>
+    <select id="checkIsComplete" parameterType="Integer" resultType="String">
+        SELECT wm.`openid` FROM web_user_management wm,account a
+        WHERE wm.`role` = #{mId} AND a.`id` = wm.`openid`;
+    </select>
+    <select id="checkIsSocket" parameterType="Integer" resultType="Integer">
+          SELECT 1 FROM gzh_socket_mini gzh WHERE gzh.`m_id` = #{mId};
+    </select>
+    <update id="changeInformStatus" parameterType="Map">
+        UPDATE activity SET is_accept = #{status} WHERE id = #{activityId};
+    </update>
+</mapper>

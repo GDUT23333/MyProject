@@ -1,0 +1,82 @@
+{
+  "groups": [
+    {
+      "name": "gzh",
+      "type": "com.lce.merchantmini.utils.MyGzhConfigUtils",
+      "sourceType": "com.lce.merchantmini.utils.MyGzhConfigUtils"
+    },
+    {
+      "name": "weixin",
+      "type": "com.lce.merchantmini.utils.MyWxConfigUtils",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    }
+  ],
+  "properties": [
+    {
+      "name": "gzh.app-id",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyGzhConfigUtils"
+    },
+    {
+      "name": "gzh.app-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyGzhConfigUtils"
+    },
+    {
+      "name": "gzh.redirect-url",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyGzhConfigUtils"
+    },
+    {
+      "name": "weixin.app-i-d",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.app-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.cert-data",
+      "type": "java.lang.Byte[]",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.draw-notify-url",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.key",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.location",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.mch-i-d",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.mer-pay-notify-url",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.spbill-create-i-p",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    },
+    {
+      "name": "weixin.trade-type",
+      "type": "java.lang.String",
+      "sourceType": "com.lce.merchantmini.utils.MyWxConfigUtils"
+    }
+  ],
+  "hints": []
+}

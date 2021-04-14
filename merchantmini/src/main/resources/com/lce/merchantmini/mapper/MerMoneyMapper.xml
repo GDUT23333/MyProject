@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper//3.0"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.MerMoneyMapper">
+    <select id="getTicketsIncomeByStatus" parameterType="map" resultType="BigDecimal">
+        SELECT SUM(`t_price`) AS ticketIncome
+        FROM activity ac RIGHT JOIN ticket t ON ac.`id` = t.`y_id`
+        RIGHT JOIN mandatory_information mi ON mi.`t_id` = t.`t_id`
+        where ac.u_id = #{mId} and mi.status = #{status};
+    </select>
+    <select id="getOverTime" parameterType="Integer" resultType="BigDecimal">
+        SELECT  SUM(t.`t_price`) FROM activity AS ac
+        RIGHT JOIN ticket t ON ac.`id` = t.`y_id`
+        RIGHT JOIN `mandatory_information` mi ON mi.`t_id` = t.`t_id`
+        WHERE ac.`u_id` = #{mId}
+        AND mi.`status` = 1
+        AND UNIX_TIMESTAMP(ac.`registration_deadline`) &lt; UNIX_TIMESTAMP(NOW());
+    </select>
+    <select id="getNotAllowRefund" parameterType="Integer" resultType="BigDecimal">
+        SELECT  SUM(t.`t_price`) FROM activity AS ac
+        RIGHT JOIN ticket t ON ac.`id` = t.`y_id`
+        RIGHT JOIN `mandatory_information` mi ON mi.`t_id` = t.`t_id`
+        WHERE ac.`u_id` = #{mId} AND mi.`status` = 1 AND t.`t_refund_type` = 0
+        AND UNIX_TIMESTAMP(ac.`registration_deadline`) &gt; UNIX_TIMESTAMP(NOW());
+    </select>
+    <select id="getMerchantLog" parameterType="Map" resultType="BigDecimal">
+        SELECT SUM(ml.`amount`- ml.`fee_charge`) FROM merchant_money_log ml
+        WHERE ml.`mer_id` = #{mId} and ml.`operation_type` = #{operation};
+    </select>
+    <select id="matchOpenId" parameterType="map" resultType="String">
+        SELECT  wm.`openid` FROM web_user_entry we
+        JOIN web_user_management wm ON we.`id` = wm.`role`
+        WHERE  we.`id` = #{mId};
+    </select>
+    <select id="findOpenIdByMId" parameterType="Integer" resultType="String">
+        SELECT  wm.`openid` FROM web_user_entry we
+        JOIN web_user_management wm ON we.`id` = wm.`role`
+        WHERE we.`id` = #{mId};
+    </select>
+    <insert id="addMoneyLog" parameterType="com.lce.merchantmini.domain.dto.MerMoneyLog">
+        INSERT INTO merchant_money_log
+        (amount,create_time,operation_type,mer_id,order_id)
+        VALUES(#{amount},#{createTime},#{status},#{mId},#{orderId});
+    </insert>
+    <insert id="addBackMoneyLog" parameterType="com.lce.merchantmini.domain.dto.MerMoneyLog">
+        INSERT INTO merchant_money_log(mer_id,amount,create_time,operation_type,order_id)
+        VALUES((SELECT role FROM web_user_management WHERE openid = #{openId}),
+        #{amount},#{createTime},#{status},#{orderId});
+    </insert>
+    <select id="getAllTicketWalletInfo" parameterType="Map" resultType="com.lce.merchantmini.domain.dto.wallet.TicketWalletInfo">
+            SELECT ti.`t_price` AS amount,ti.`t_name` AS ticketType,ti.`t_refund_type` as status ,ac.`activity_name` AS activityName,
+            mi.`status` AS moneyType,mi.`update_time` AS createTime,ui.`nickname` AS buyer,
+            ti.`t_refund_type` AS isLock,ac.`end_time` AS acEndTime,mi.`m_id` AS id
+            FROM activity ac LEFT JOIN ticket ti ON ac.`id` = ti.`y_id`
+            RIGHT JOIN mandatory_information mi ON mi.`t_id` = ti.`t_id`
+            LEFT JOIN user_info ui ON mi.`openid` =  ui.`openid`
+            WHERE ac.`u_id` = #{mId} and YEAR(mi.`update_time`) = YEAR(NOW()) and MONTH(mi.`update_time`) = #{month} and mi.`status` != 0;
+    </select>
+    <select id="getMoneyLog" parameterType="Map" resultType="com.lce.merchantmini.domain.dto.wallet.MoneyLogInfo">
+        SELECT ml.`id` as id,ml.`amount` as amount,ml.`fee_charge` as feeCharge,
+        ml.`create_time` as createTime,
+        ml.`operation_type` as operationType
+        FROM merchant_money_log ml where ml.`mer_id` = #{mId}
+        AND YEAR(ml.`create_time`) = #{year}
+        AND MONTH(ml.`create_time`) = #{month}
+        <if test="'0'.toString()==status.toString()">
+            AND ml.`operation_type` = 0
+        </if>
+        <if test="'1'.toString()==status.toString()">
+            AND ml.`operation_type` == 1
+        </if>
+         ORDER BY ml.`create_time` DESC;
+    </select>
+    <select id="getTicketInfoByStatus" parameterType="Map" resultType="com.lce.merchantmini.domain.dto.wallet.TicketWalletInfo">
+        SELECT ti.`t_price` AS amount,ti.`t_name` AS ticketType,ti.`t_refund_type` as status ,ac.`activity_name` AS activityName,
+        mi.`status` AS moneyType,mi.`update_time` AS createTime,ui.`nickname` AS buyer,
+        ti.`t_refund_type` AS isLock,ac.`end_time` AS acEndTime,mi.`m_id` AS id
+        FROM activity ac LEFT JOIN ticket ti ON ac.`id` = ti.`y_id`
+        RIGHT JOIN mandatory_information mi ON mi.`t_id` = ti.`t_id`
+        LEFT JOIN user_info ui ON mi.`openid` =  ui.`openid`
+        WHERE ac.`u_id` = #{mId} AND YEAR(mi.`update_time`) = #{year} AND MONTH(mi.`update_time`) = #{month}
+        <if test="'1'.toString()==ticketStatus.toString()">
+            AND mi.`status` = 1
+        </if>
+        <if test="'2'.toString()==ticketStatus.toString()">
+            AND mi.`status` != 0 and mi.`status` != 1
+        </if>
+        <if test="'3'.toString()==ticketStatus.toString()">
+            AND mi.`status` != 0
+        </if>
+        <if test="activityId != 0">
+            AND ac.`id` = #{activityId}
+        </if>
+        ORDER BY createTime DESC;
+    </select>
+    <select id="getActivityInfos" parameterType="Integer" resultType="com.lce.merchantmini.domain.dto.wallet.ActivitySimpleInfo">
+        SELECT activity_name as activityName,id as activityId  FROM activity WHERE u_id = #{mId};
+    </select>
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD mapper//3.0"
+        "http://mbatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.MerActConsultMapper">
+    <select id="getAllConsult" parameterType="Integer" resultType="com.lce.merchantmini.domain.vo.Consult">
+        SELECT c.`id`,c.`activity_id` AS aId,c.`openid` AS openId,
+        c.`reply`,c.`show` AS `status`,c.`question`,ui.`nickname` AS nickName,
+        ui.`portrait`,a.`activity_name` AS activityName,c.`createtime` AS createTime
+        FROM consult c LEFT JOIN (SELECT id FROM activity WHERE u_id = #{mId}) AS temp
+        ON temp.id = c.`activity_id` LEFT JOIN user_info ui ON c.`openid` = ui.`openid`
+        LEFT JOIN activity a ON a.`id` = c.`activity_id` ORDER BY c.`createtime` DESC;
+    </select>
+
+    <update id="reply" parameterType="map">
+        UPDATE consult SET reply = #{reply},`show` = 1 WHERE id = #{id};
+    </update>
+
+    <select id="getAllComment" parameterType="Integer" resultType="com.lce.merchantmini.domain.dto.Comment">
+        SELECT ac.`activity_name` as activityName,co.`id` as id,ui.`nickname` as nickName,
+        ui.`portrait` as portrait,co.`comment` as content,co.`reply` as reply,co.`createtime` as createTime
+        FROM activity ac LEFT JOIN `comment` co ON co.`activity_id` = ac.`id`
+        LEFT JOIN user_info ui ON co.`openid` = ui.`openid`
+        WHERE  ac.`u_id` = #{mId} ORDER BY co.`createtime` DESC;
+    </select>
+    <update id="replyComment" parameterType="map">
+        UPDATE comment SET reply = #{reply}  WHERE id = #{cId};
+    </update>
+</mapper>
