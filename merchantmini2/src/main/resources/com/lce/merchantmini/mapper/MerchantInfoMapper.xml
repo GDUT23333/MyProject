@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.MerchantInfoMapper">
+    <resultMap id="infoChange" type="com.lce.merchantmini.domain.dto.MerchantInfo">
+        <result column="company_name" property="nickName"/>
+        <result column="phone" property="phone"/>
+        <result column="image" property="imgShowUrl"/>
+        <result column="company_introduction" property="introduction"/>
+    </resultMap>
+    <!--查找商家信息-->
+    <select id="showInfo" parameterType="Integer" resultMap="infoChange">
+        SELECT image,company_name,phone,company_introduction
+        FROM account
+        WHERE id = (SELECT openid FROM web_user_management WHERE role = #{id});
+    </select>
+    <!--更新商家信息-->
+    <update id="updateInfo" parameterType="com.lce.merchantmini.domain.dto.MerchantInfo">
+        UPDATE account
+        <set>
+            <if test="nickName != null and nickName != ''">
+                company_name = #{nickName},
+            </if>
+            <if test="introduction != null and introduction != ''">
+                company_introduction = #{introduction},
+            </if>
+            <if test="imgShowUrl != null and imgShowUrl != ''">
+                image = #{imgShowUrl},
+            </if>
+            <if test="phone != null and phone != ''">
+                phone = #{phone}
+            </if>
+        </set>
+        where id = (SELECT openid FROM web_user_management WHERE role = #{id});
+    </update>
+</mapper>

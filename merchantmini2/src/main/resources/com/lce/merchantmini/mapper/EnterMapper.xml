@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.EnterMapper">
+    <select id="checkIsEnter" parameterType="com.lce.merchantmini.domain.dto.EnterDetail" resultType="Integer">
+        SELECT COUNT(*) FROM merchant_enter_detail
+        WHERE merchant_company = #{merchantCompany} OR phone = #{phone};
+    </select>
+    <insert id="doEnter" parameterType="com.lce.merchantmini.domain.dto.EnterDetail">
+        INSERT INTO merchant_enter_detail
+        (merchant_company,merchant_name,activity_type,platform,phone,openid,create_time,unionid)
+        VALUES(#{merchantCompany},#{merchantName},#{activityType},#{platform},
+        #{phone},#{openId},#{createTime},#{unionId});
+    </insert>
+    <select id="checkIsInvited" parameterType="com.lce.merchantmini.domain.dto.InvitedInfo" resultType="Integer">
+        SELECT 1 FROM merchant_authorize_user mu WHERE mu.`m_id` = #{mId} AND
+        mu.`openid` = #{openId};
+    </select>
+    <insert id="invite" parameterType="com.lce.merchantmini.domain.dto.InvitedInfo">
+        INSERT INTO merchant_authorize_user(openid,m_id,role,nickname,head_pitcher)
+        VALUES(#{openId}#{mId},#{role},#{nickName},#{headPitcher});
+    </insert>
+    <delete id="dropManager" parameterType="com.lce.merchantmini.domain.dto.InvitedInfo">
+        DELETE FROM merchant_authorize_user WHERE id = #{id};
+    </delete>
+</mapper>

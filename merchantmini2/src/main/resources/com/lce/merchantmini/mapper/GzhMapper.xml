@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+       PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lce.merchantmini.mapper.GzhMapper">
+    <insert id="socketGzh" parameterType="com.lce.merchantmini.domain.dso.GzhUserInfo">
+        INSERT INTO gzh_socket_mini(m_id,gzh_openid)
+        VALUES((SELECT m_id FROM merchant_enter_detail WHERE unionid = #{unionid}),#{openid});
+    </insert>
+    <select id="checkIsSocket" parameterType="Integer" resultType="Integer">
+        SELECT 1 FROM gzh_socket_mini WHERE m_id = #{mId};
+    </select>
+    <insert id="socketGzhByActivityId" parameterType="Map">
+        INSERT INTO gzh_socket_mini(m_id,gzh_openid)
+        VALUES((SELECT u_id FROM activity  WHERE id = #{activityId}),#{gzhOpenId});
+    </insert>
+    <select id="getActNameByID" resultType="String" parameterType="Integer">
+        SELECT activity_name FROM activity WHERE id = #{id};
+    </select>
+</mapper>
+
